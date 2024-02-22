@@ -2,7 +2,7 @@ import java.io.FileInputStream;
 import java.io.IOException;
 
 public class
-Main {
+test {
 
     static Object[][] Opcodes = {
             /* Name, Imm,  ZP,   ZPX,  ZPY,  ABS, ABSX, ABSY,  IND, INDX, INDY, IMPL, REL */
@@ -95,22 +95,22 @@ Main {
         }
     }
 
-//     disassemble goes here...
+    // disassemble goes here...
     private static void disassemble(byte[] bytes) {
         int start = (bytes[1] & 0xff) * 256 + (bytes[0] & 0xff);
         System.out.println(start);
         int pc = start, x;
 
         for (x = 2; x < bytes.length; x++) {
+
             System.out.printf("%n%04X:   ", pc);
 
             byte op = bytes[x];
-
             pc++;
 
             int row, col = 0;
             outer:
-            for (row = 0; row < Opcodes.length; row++) {
+            for (row = 0; row < Opcodes.length; row++)
                 for (col = 1; col < Opcodes[row].length; col++) {
                     Object o = Opcodes[row][col];
                     if (o == null) continue;
@@ -118,11 +118,12 @@ Main {
                     if (opcode == (op & 0xff))
                         break outer;
                 }
-            }
 
             if (row == Opcodes.length) {
                 System.out.printf(" %02X         ", op);
-                System.out.printf("???");
+                System.out.println("???\tUndefined opcode");
+                // Increment x to skip over undefined opcode
+                x++;
                 continue;
             }
 
@@ -137,9 +138,8 @@ Main {
                 pc++;
                 System.out.printf(" %02X %02X      ", op, b);
             }
-            System.out.print(Opcodes[row][0]);
+//            System.out.print(Opcodes[row][0]);
         }
-
     }
 
 
