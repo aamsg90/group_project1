@@ -82,69 +82,72 @@ Main {
                 System.out.printf("%n%04X:", pc);
                 chars.setLength(0);
             }
-            // build the chars - only printable chars
+
             char c = (char) (bytes[x] & 0xff);
-            if (c >= 32 && c <= 127)
-                chars.append(c);
-            else
-                chars.append('.');
-            // the next line uses a ternary operator to achieve the above.
-//            chars.append(( c >= 32 && c <= 127 ) ? c : '.');
+            chars.append(( c >= 32 && c <= 127 ) ? c : '.');
+
             System.out.printf(" %02X", bytes[x]);
             pc++;
         }
     }
 
-//     disassemble goes here...
-    private static void disassemble(byte[] bytes) {
-        int start = (bytes[1] & 0xff) * 256 + (bytes[0] & 0xff);
-        System.out.println(start);
-        int pc = start, x;
+private static void disassemble(byte[] bytes) {
+    int start = (bytes[1] & 0xff) * 256 + (bytes[0] & 0xff);
+    System.out.println(start);
+    int  x;
 
-        for (x = 2; x < bytes.length; x++) {
-            System.out.printf("%n%04X:   ", pc);
+    for (x = 2; x < bytes.length; x++) {
+        System.out.printf("%n%04X:   ", start);
+        byte op = bytes[x];
+//        System.out.println(op);
+        start++;
 
-            byte op = bytes[x];
+        int row, col = 0;
+        outer:
 
-            pc++;
+        for (row = 0; row < Opcodes.length; row++) {
+            for (col = 1; col < Opcodes[row].length; col++) {
 
-            int row, col = 0;
-            outer:
-            for (row = 0; row < Opcodes.length; row++) {
-                for (col = 1; col < Opcodes[row].length; col++) {
-                    Object o = Opcodes[row][col];
-                    if (o == null) continue;
-                    int opcode = (int) o;
-                    if (opcode == (op & 0xff))
-                        break outer;
-                }
+                Object o = Opcodes[row][col];
+                if (o == null) continue;
+                int opcode = (int) o;
+                if (opcode == (op & 0xff))
+                    break outer;
             }
+        }
 
-            if (row == Opcodes.length) {
-                System.out.printf(" %02X         ", op);
-                System.out.printf("???");
-                continue;
-            }
+        if (row == Opcodes.length) {
+            System.out.printf(" %02X         ", op);
+            System.out.print(" ???");
+            continue;
+        }
 
-            if (col == 11)
-                System.out.printf(" %02X         ", op);
-            else if (col == 5 || col == 6 || col == 7 || col == 8) {
-                byte lo = bytes[++x], hi = bytes[++x];
-                pc += 2;
-                System.out.printf(" %02X %02X %02X   ", op, lo, hi);
-            } else {
-                byte b = bytes[++x];
-                pc++;
-                System.out.printf(" %02X %02X      ", op, b);
-            }
-            System.out.print(Opcodes[row][0]);
+        if (col == 11) {
+            System.out.printf(" %02X         ", op);
+            System.out.printf(" %s", Opcodes[row][0]);
+        }
+
+        else if (col == 4 || col == 5 || col == 6 || col == 7 || col == 8) {
+            byte lo = (x + 1 < bytes.length) ? bytes[++x] : 0;
+            byte hi = (x + 1 < bytes.length) ? bytes[++x] : 0;
+            start += 2;
+            System.out.printf(" %02X %02X %02X   ", op, lo, hi);
+
+            // Output operand for instructions with 2-byte operands
+            System.out.printf(" %s $%02X%02X", Opcodes[row][0], hi, lo);
+
+        } else {
+            byte b = (x + 1 < bytes.length) ? bytes[++x] : 0;
+            start++;
+            System.out.printf(" %02X %02X      ", op, b);
+
+            // Output operand for instructions with 1-byte operands
+            System.out.printf(" %s $%02X", Opcodes[row][0], b);
+
         }
 
     }
-
-
-
-
+}
 
 
 
