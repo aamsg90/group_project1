@@ -1,9 +1,7 @@
 import java.io.FileInputStream;
 import java.io.IOException;
-
 public class
 Main {
-
     static Object[][] Opcodes = {
             /* Name, Imm,  ZP,   ZPX,  ZPY,  ABS, ABSX, ABSY,  IND, INDX, INDY, IMPL, REL */
             {"ADC", 0x69, 0x65, 0x75, null, 0x6d, 0x7d, 0x79, null, 0x61, 0x71, null, null},
@@ -64,45 +62,32 @@ Main {
             {"STY", null, 0x84, 0x94, null, 0x8c, null, null, null, null, null, null, null},
             {"???", null, null, null, null, null, null, null, null, null, null, null, null}
     };
-
-
     public static void hexDump(byte[] bytes) {
-        // we and with 0xff to mask off the bits when sign-extended.
         int start = (bytes[1] & 0xff) * 256 + (bytes[0] & 0xff);
         System.out.println(start);
         int pc = start;
         StringBuilder chars = new StringBuilder();
-
         for (int x = 2; x < bytes.length; x++) {
-            // make it pretty
             if ((pc - start) % 8 == 0) {
-                // chars are built during each iteration, but
-                // printed when we reach the end of the line.
                 System.out.printf(" %s", chars);
                 System.out.printf("%n%04X:", pc);
                 chars.setLength(0);
             }
-
             char c = (char) (bytes[x] & 0xff);
             chars.append(( c >= 32 && c <= 127 ) ? c : '.');
-
             System.out.printf(" %02X", bytes[x]);
             pc++;
         }
     }
-
     private static void disassemble(byte[] bytes) {
         int start = (bytes[1] & 0xff) * 256 + (bytes[0] & 0xff);
         int x;
-
         for (x = 2; x < bytes.length; x++) {
             System.out.printf("%n%04X:   ", start);
             byte op = bytes[x];
             start++;
-
             int row, col = 0;
             outer:
-
             for (row = 0; row < Opcodes.length; row++) {
                 for (col = 1; col < Opcodes[row].length; col++) {
                     Object o = Opcodes[row][col];
@@ -112,13 +97,11 @@ Main {
                         break outer;
                 }
             }
-
             if (row == Opcodes.length || col == Opcodes[row].length) {
                 System.out.printf(" %02X         ", op);
                 System.out.print(" ???");
                 continue;
             }
-
             if (col == 11) {
                 System.out.printf(" %02X         ", op);
                 System.out.printf(" %s", Opcodes[row][0]);
@@ -127,8 +110,7 @@ Main {
                 byte hi = (x + 1 < bytes.length) ? bytes[++x] : 0;
                 start += 2;
                 System.out.printf(" %02X %02X %02X   ", op, lo, hi);
-
-                // Output operand for instructions with 2-byte operands
+                // 2 byte operands
                 if (Opcodes[row][col] == Opcodes[row][1]) {
                     System.out.printf(" %s #$%02X%02X", Opcodes[row][0], hi, lo);
                 } else if (Opcodes[row][col] == Opcodes[row][3] || Opcodes[row][col] == Opcodes[row][4] || Opcodes[row][col] == Opcodes[row][6] || Opcodes[row][col] == Opcodes[row][7] || Opcodes[row][col] == Opcodes[row][9]) {
@@ -138,33 +120,23 @@ Main {
                 } else {
                     System.out.printf(" %s $%02X%02X", Opcodes[row][0], hi, lo);
                 }
-
             } else {
                 byte b = (x + 1 < bytes.length) ? bytes[++x] : 0;
                 start++;
                 System.out.printf(" %02X %02X      ", op, b);
-
-                // Output operand for instructions with 1-byte operands
+                //  1 byte operands
                 if (Opcodes[row][col] == Opcodes[row][1]) {
                     System.out.printf(" %s #$%02X", Opcodes[row][0], b);
                 } else {
                     System.out.printf(" %s $%02X", Opcodes[row][0], b);
                 }
-
             }
         }
     }
-
-
-
-
     public static void main(String[] args) throws IOException {
-
         FileInputStream in = new FileInputStream("congrats.prg");
-
         byte[] file = in.readAllBytes();
         in.close();
-
         hexDump(file);
         disassemble(file);
     }
